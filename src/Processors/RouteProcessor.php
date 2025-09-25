@@ -3,6 +3,7 @@
 namespace AndreasElia\PostmanGenerator\Processors;
 
 use AndreasElia\PostmanGenerator\Concerns\HasAuthentication;
+use AndreasElia\PostmanGenerator\Contracts\RouteReader;
 use Closure;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Validation\Rule;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationRuleParser;
 use ReflectionClass;
 use ReflectionFunction;
 
-class RouteProcessor
+class RouteProcessor implements RouteReader
 {
     use HasAuthentication;
 
@@ -29,11 +30,9 @@ class RouteProcessor
 
     public function __construct(Repository $config, Router $router)
     {
-        $this->config = $config['api-postman'];
+        $this->config = $config['api-exports'];
 
         $this->router = $router;
-
-        $this->resolveAuth();
     }
 
     public function process(array $output): array
@@ -216,7 +215,7 @@ class RouteProcessor
     {
         return is_string($action['uses']) && Str::startsWith($action['uses'], [
             'C:32:"Opis\\Closure\\SerializableClosure',
-            'O:47:"Laravel\SerializableClosure\\SerializableClosure',
+            'O:47:"Laravel\\SerializableClosure\\SerializableClosure',
             'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure',
         ]);
     }

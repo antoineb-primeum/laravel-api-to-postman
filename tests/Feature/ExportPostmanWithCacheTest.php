@@ -23,7 +23,7 @@ Route::middleware('api')->group(function () {
 });
 PHP);
 
-        config()->set('api-postman.filename', 'test.json');
+        config()->set('api-exports.filename', 'test.json');
 
         Storage::disk()->deleteDirectory('postman');
     }
@@ -38,7 +38,7 @@ PHP);
 
         $this->artisan('export:postman')->assertExitCode(0);
 
-        $collection = json_decode(Storage::get('postman/'.config('api-postman.filename')), true);
+        $collection = json_decode(Storage::get('postman/'.config('api-exports.filename')), true);
 
         $routes = $this->app['router']->getRoutes()->getRoutesByName();
 

@@ -2,90 +2,42 @@
 
 namespace AndreasElia\PostmanGenerator;
 
-use AndreasElia\PostmanGenerator\Concerns\HasAuthentication;
-use AndreasElia\PostmanGenerator\Processors\RouteProcessor;
+use AndreasElia\PostmanGenerator\Postman\Exporter as PostmanExporter;
 use Illuminate\Contracts\Config\Repository;
 
 class Exporter
 {
-    use HasAuthentication;
+    protected PostmanExporter $exporter;
 
-    protected string $filename;
-
-    protected array $output;
-
-    private array $config;
-
-    public function __construct(Repository $config)
+    public function __construct(Repository $config, PostmanExporter $postmanExporter = null)
     {
-        $this->config = $config['api-postman'];
+        // Allow the container to inject Postman\Exporter or instantiate one lazily
+        $this->exporter = $postmanExporter ?? new PostmanExporter($config);
     }
 
     public function to(string $filename): self
     {
-        $this->filename = $filename;
+        $this->exporter->to($filename);
 
         return $this;
     }
 
-    public function getOutput()
+    public function setAuthentication($authentication): self
     {
-        return json_encode($this->output);
+        if (method_exists($this->exporter, 'setAuthentication')) {
+            $this->exporter->setAuthentication($authentication);
+        }
+
+        return $this;
     }
 
     public function export(): void
     {
-        $this->resolveAuth();
-
-        $this->output = $this->generateStructure();
+        $this->exporter->export();
     }
 
-    protected function generateStructure(): array
+    public function getOutput()
     {
-        $this->output = [
-            'variable' => [
-                [
-                    'key' => 'base_url',
-                    'value' => $this->config['base_url'],
-                ],
-            ],
-            'info' => [
-                'name' => $this->filename,
-                'schema' => 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-            ],
-            'item' => [],
-            'event' => [],
-        ];
-
-        $preRequestPath = $this->config['prerequest_script'];
-        $testPath = $this->config['test_script'];
-
-        if ($preRequestPath || $testPath) {
-            $scripts = [
-                'prerequest' => $preRequestPath,
-                'test' => $testPath,
-            ];
-
-            foreach ($scripts as $type => $path) {
-                if (file_exists($path)) {
-                    $this->output['event'][] = [
-                        'listen' => $type,
-                        'script' => [
-                            'type' => 'text/javascript',
-                            'exec' => file_get_contents($path),
-                        ],
-                    ];
-                }
-            }
-        }
-
-        if ($this->authentication) {
-            $this->output['variable'][] = [
-                'key' => 'token',
-                'value' => $this->authentication->getToken(),
-            ];
-        }
-
-        return app(RouteProcessor::class)->process($this->output);
+        return $this->exporter->getOutput();
     }
 }

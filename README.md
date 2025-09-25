@@ -28,9 +28,9 @@ php artisan vendor:publish --provider="AndreasElia\PostmanGenerator\PostmanGener
 
 ## Configuration
 
-You can modify any of the `api-postman.php` config values to suit your export requirements.
+You can modify any of the `api-exports.php` config values to suit your export requirements.
 
-Click [here](/config/api-postman.php) to view the config attributes.
+Click [here](/config/api-exports.php) to view the config attributes.
 
 ## Usage
 

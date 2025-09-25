@@ -2,22 +2,22 @@
 
 namespace AndreasElia\PostmanGenerator\Commands;
 
-use AndreasElia\PostmanGenerator\Exporter;
+use AndreasElia\PostmanGenerator\SqlMap\Exporter as SqlMapExporter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class ExportPostmanCommand extends Command
+class ExportSqlmapCommand extends Command
 {
     /** @var string */
-    protected $signature = 'export:postman
+    protected $signature = 'export:sqlmap
                             {--bearer= : The bearer token to use on your endpoints}
                             {--basic= : The basic auth to use on your endpoints}';
 
     /** @var string */
-    protected $description = 'Automatically generate a Postman collection for your API routes';
+    protected $description = 'Automatically generate a SqlMap file for your API routes';
 
-    public function handle(Exporter $exporter): void
+    public function handle(SqlMapExporter $exporter): void
     {
         $filename = str_replace(
             ['{timestamp}', '{app}'],
@@ -42,12 +42,11 @@ class ExportPostmanCommand extends Command
                 }
 
                 return null;
-            }))
-            ->export();
+            }))->export();
 
         Storage::disk(config('api-exports.disk'))
-            ->put('postman/'.$filename, $exporter->getOutput());
+            ->put('sqlmap/'.$filename, $exporter->getOutput());
 
-        $this->info('Postman Collection Exported: '.storage_path('app/postman/'.$filename));
+        $this->info('SqlMap Exported: '.storage_path('app/sqlmap/'.$filename));
     }
 }
