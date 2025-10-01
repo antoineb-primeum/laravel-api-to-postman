@@ -4,7 +4,6 @@ namespace AndreasElia\PostmanGenerator\Commands;
 
 use AndreasElia\PostmanGenerator\SqlMap\Exporter as SqlMapExporter;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ExportSqlmapCommand extends Command
@@ -36,17 +35,56 @@ class ExportSqlmapCommand extends Command
                 if (filled($this->option('bearer'))) {
                     return new \AndreasElia\PostmanGenerator\Authentication\Bearer($this->option('bearer'));
                 }
-
                 if (filled($this->option('basic'))) {
                     return new \AndreasElia\PostmanGenerator\Authentication\Basic($this->option('basic'));
                 }
-
                 return null;
             }))->export();
 
-        Storage::disk(config('api-exports.disk'))
-            ->put('sqlmap/'.$filename, $exporter->getOutput());
-
-        $this->info('SqlMap Exported: '.storage_path('app/sqlmap/'.$filename));
+        // Optionnel : log debug de la structure
+        // $structure = $exporter->generateStructure();
+        // file_put_contents(base_path('sqlmap_command.log'), var_export($structure, true));
+        $structure = $exporter->generateStructure();
+        $items = [];
+        $exporter->traverseItems($structure['item'] ?? [], $items);
+        $host = parse_url(config('api-exports.base_url'), PHP_URL_HOST) ?? 'localhost';
+        $timestamp = date('Y_m_d_His');
+        $storagePath = storage_path('app/private/sqlmap/');
+        if (!is_dir($storagePath)) {
+            mkdir($storagePath, 0777, true);
+        }
+        foreach ($items as $item) {
+            $req = $item['request'];
+            $method = strtoupper($req['method'] ?? 'GET');
+            $url = $req['url']['raw'] ?? $req['url'] ?? '/';
+            $url = preg_replace('/\{[A-Za-z0-9_]+\}/', 'FUZZ', $url);
+            $url = preg_replace('/\:[A-Za-z0-9_]+/', 'FUZZ', $url);
+            $template = $method.' '.$url.' HTTP/1.1' . "\n";
+            $template .= 'Host: '.$host."\n";
+            foreach ($req['header'] ?? [] as $header) {
+                if (strtolower($header['key']) !== 'host') {
+                    $template .= $header['key'].': '.$header['value']."\n";
+                }
+            }
+            $body = '';
+            if (in_array($method, ['POST','PUT','PATCH','DELETE'])) {
+                if (isset($req['body']['urlencoded']) && is_array($req['body']['urlencoded'])) {
+                    $pairs = [];
+                    foreach ($req['body']['urlencoded'] as $field) {
+                        $pairs[] = $field['key'].'=FUZZ';
+                    }
+                    $body = implode('&', $pairs);
+                } elseif (isset($req['body']['raw']) && $req['body']['raw'] !== '') {
+                    $body = str_replace(['\n','\r'], '', $req['body']['raw']);
+                }
+                if ($body !== '') {
+                    $template .= 'Content-Length: '.strlen($body)."\n\n";
+                    $template .= $body;
+                }
+            }
+            $filename = $timestamp.'_'.str_replace(['/','{','}','\\',':'], '_', $item['name']).'_'.$method.'.template';
+            file_put_contents($storagePath.$filename, $template);
+        }
+        $this->info('Export SQLMap terminé. Les fichiers .template sont disponibles dans '.storage_path('app/private/sqlmap/'));
     }
 }
