@@ -53,6 +53,7 @@ class ExportSqlmapCommand extends Command
         if (!is_dir($storagePath)) {
             mkdir($storagePath, 0777, true);
         }
+        $count = 0;
         foreach ($items as $item) {
             $req = $item['request'];
             $method = strtoupper($req['method'] ?? 'GET');

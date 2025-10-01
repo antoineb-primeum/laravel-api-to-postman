@@ -40,7 +40,7 @@ class Exporter implements Generator
         $this->output = $this->generateStructure();
     }
 
-    protected function generateStructure(): array
+    public function generateStructure(): array
     {
         $structure = [
             'variable' => [
@@ -72,7 +72,7 @@ class Exporter implements Generator
         return implode(PHP_EOL, $collected);
     }
 
-    protected function traverseItems(array $items, array &$collected): void
+    public function traverseItems(array $items, array &$collected): void
     {
         foreach ($items as $item) {
             if (isset($item['item']) && is_array($item['item'])) {
