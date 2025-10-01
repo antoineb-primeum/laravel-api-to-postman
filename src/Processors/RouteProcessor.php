@@ -59,24 +59,7 @@ class RouteProcessor implements RouteReader
             $middlewares = $route->gatherMiddleware();
 
             foreach ($methods as $method) {
-                $includedMiddleware = false;
-
-                foreach ($middlewares as $middleware) {
-                    if (in_array($middleware, $this->config['include_middleware'])) {
-                        $includedMiddleware = true;
-                    }
-                }
-
-                if (empty($middlewares) || ! $includedMiddleware) {
-                    continue;
-                }
-
                 $reflectionMethod = $this->getReflectionMethod($route->getAction());
-
-                if (! $reflectionMethod) {
-                    continue;
-                }
-
                 $routeHeaders = $this->config['headers'];
 
                 if ($this->authentication && in_array($this->config['auth_middleware'], $middlewares)) {
@@ -85,7 +68,7 @@ class RouteProcessor implements RouteReader
 
                 $uri = Str::of($route->uri())->replaceMatches('/{([[:alnum:]_]+)}/', ':$1');
 
-                if ($this->config['include_doc_comments']) {
+                if ($this->config['include_doc_comments'] && $reflectionMethod) {
                     $description = (new DocBlockProcessor)($reflectionMethod);
                 }
 
@@ -95,7 +78,9 @@ class RouteProcessor implements RouteReader
                         $this->processRequest(
                             $method,
                             $uri,
-                            $this->config['enable_formdata'] ? (new FormDataProcessor)->process($reflectionMethod) : collect()
+                            $reflectionMethod && $this->config['enable_formdata']
+                                ? (new FormDataProcessor)->process($reflectionMethod)
+                                : collect()
                         ),
                         ['description' => $description ?? '']
                     ),

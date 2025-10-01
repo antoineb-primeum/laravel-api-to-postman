@@ -1,9 +1,10 @@
 {
-    "name": "andreaselia/laravel-api-to-postman",
-    "description": "Generate a Postman collection automatically from your Laravel API",
+    "name": "abenevaut/laravel-route-export",
+    "description": "Generate a Route collection automatically from your Laravel API",
     "keywords": [
         "laravel",
         "postman",
+        "sqlmap",
         "api",
         "collection",
         "generate"

@@ -9,7 +9,7 @@ class Exporter
 {
     protected PostmanExporter $exporter;
 
-    public function __construct(Repository $config, PostmanExporter $postmanExporter = null)
+    public function __construct(Repository $config, ?PostmanExporter $postmanExporter = null)
     {
         // Allow the container to inject Postman\Exporter or instantiate one lazily
         $this->exporter = $postmanExporter ?? new PostmanExporter($config);
