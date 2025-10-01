@@ -31,7 +31,7 @@ class FormDataProcessor
                     $rule = preg_split('/\s*\|\s*/', $rule);
                 }
 
-                $printRules = config('api-postman.print_rules');
+                $printRules = config('api-exports.print_rules');
 
                 $rules->push([
                     'name' => $fieldName,

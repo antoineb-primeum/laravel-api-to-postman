@@ -3,6 +3,9 @@
 namespace AndreasElia\PostmanGenerator;
 
 use AndreasElia\PostmanGenerator\Commands\ExportPostmanCommand;
+use AndreasElia\PostmanGenerator\Commands\ExportSqlmapCommand;
+use AndreasElia\PostmanGenerator\Contracts\RouteReader;
+use AndreasElia\PostmanGenerator\Processors\RouteProcessor;
 use Illuminate\Support\ServiceProvider;
 
 class PostmanGeneratorServiceProvider extends ServiceProvider
@@ -16,11 +19,14 @@ class PostmanGeneratorServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/api-postman.php' => config_path('api-postman.php'),
+                __DIR__.'/../config/api-exports.php' => config_path('api-exports.php'),
             ], 'postman-config');
         }
 
-        $this->commands(ExportPostmanCommand::class);
+        $this->commands([
+            ExportPostmanCommand::class,
+            ExportSqlmapCommand::class,
+        ]);
     }
 
     /**
@@ -31,7 +37,10 @@ class PostmanGeneratorServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/api-postman.php', 'api-postman'
+            __DIR__.'/../config/api-exports.php', 'api-exports'
         );
+
+        // Bind the route reader contract to the default RouteProcessor implementation
+        $this->app->bind(RouteReader::class, RouteProcessor::class);
     }
 }

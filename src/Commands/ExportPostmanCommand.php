@@ -22,10 +22,10 @@ class ExportPostmanCommand extends Command
         $filename = str_replace(
             ['{timestamp}', '{app}'],
             [date('Y_m_d_His'), Str::snake(config('app.name'))],
-            config('api-postman.filename')
+            config('api-exports.filename')
         );
 
-        config()->set('api-postman.authentication', [
+        config()->set('api-exports.authentication', [
             'method' => $this->option('bearer') ? 'bearer' : ($this->option('basic') ? 'basic' : null),
             'token' => $this->option('bearer') ?? $this->option('basic') ?? null,
         ]);
@@ -45,7 +45,7 @@ class ExportPostmanCommand extends Command
             }))
             ->export();
 
-        Storage::disk(config('api-postman.disk'))
+        Storage::disk(config('api-exports.disk'))
             ->put('postman/'.$filename, $exporter->getOutput());
 
         $this->info('Postman Collection Exported: '.storage_path('app/postman/'.$filename));

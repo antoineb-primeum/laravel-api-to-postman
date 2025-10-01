@@ -15,7 +15,7 @@ class ExportPostmanTest extends TestCase
     {
         parent::setUp();
 
-        config()->set('api-postman.filename', 'test.json');
+        config()->set('api-exports.filename', 'test.json');
 
         Storage::disk()->deleteDirectory('postman');
     }
@@ -25,11 +25,11 @@ class ExportPostmanTest extends TestCase
      */
     public function test_standard_export_works(bool $formDataEnabled)
     {
-        config()->set('api-postman.enable_formdata', $formDataEnabled);
+        config()->set('api-exports.enable_formdata', $formDataEnabled);
 
         $this->artisan('export:postman')->assertExitCode(0);
 
-        $collection = json_decode(Storage::get('postman/'.config('api-postman.filename')), true);
+        $collection = json_decode(Storage::get('postman/'.config('api-exports.filename')), true);
 
         $routes = $this->app['router']->getRoutes();
 
@@ -62,11 +62,11 @@ class ExportPostmanTest extends TestCase
      */
     public function test_bearer_export_works(bool $formDataEnabled)
     {
-        config()->set('api-postman.enable_formdata', $formDataEnabled);
+        config()->set('api-exports.enable_formdata', $formDataEnabled);
 
         $this->artisan('export:postman --bearer=1234567890')->assertExitCode(0);
 
-        $collection = json_decode(Storage::get('postman/'.config('api-postman.filename')), true);
+        $collection = json_decode(Storage::get('postman/'.config('api-exports.filename')), true);
 
         $routes = $this->app['router']->getRoutes();
 
@@ -109,11 +109,11 @@ class ExportPostmanTest extends TestCase
      */
     public function test_basic_export_works(bool $formDataEnabled)
     {
-        config()->set('api-postman.enable_formdata', $formDataEnabled);
+        config()->set('api-exports.enable_formdata', $formDataEnabled);
 
         $this->artisan('export:postman --basic=username:password1234')->assertExitCode(0);
 
-        $collection = json_decode(Storage::get('postman/'.config('api-postman.filename')), true);
+        $collection = json_decode(Storage::get('postman/'.config('api-exports.filename')), true);
 
         $routes = $this->app['router']->getRoutes();
 
@@ -157,13 +157,13 @@ class ExportPostmanTest extends TestCase
     public function test_structured_export_works(bool $formDataEnabled)
     {
         config([
-            'api-postman.structured' => true,
-            'api-postman.enable_formdata' => $formDataEnabled,
+            'api-exports.structured' => true,
+            'api-exports.enable_formdata' => $formDataEnabled,
         ]);
 
         $this->artisan('export:postman')->assertExitCode(0);
 
-        $collection = json_decode(Storage::get('postman/'.config('api-postman.filename')), true);
+        $collection = json_decode(Storage::get('postman/'.config('api-exports.filename')), true);
 
         $routes = $this->app['router']->getRoutes();
 
@@ -175,14 +175,14 @@ class ExportPostmanTest extends TestCase
     public function test_rules_printing_export_works()
     {
         config([
-            'api-postman.enable_formdata' => true,
-            'api-postman.print_rules' => true,
-            'api-postman.rules_to_human_readable' => false,
+            'api-exports.enable_formdata' => true,
+            'api-exports.print_rules' => true,
+            'api-exports.rules_to_human_readable' => false,
         ]);
 
         $this->artisan('export:postman')->assertExitCode(0);
 
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/storeWithFormRequest')
@@ -198,16 +198,16 @@ class ExportPostmanTest extends TestCase
     public function test_rules_printing_get_export_works()
     {
         config([
-            'api-postman.enable_formdata' => true,
-            'api-postman.print_rules' => true,
-            'api-postman.rules_to_human_readable' => false,
+            'api-exports.enable_formdata' => true,
+            'api-exports.print_rules' => true,
+            'api-exports.rules_to_human_readable' => false,
         ]);
 
         $this->artisan('export:postman')->assertExitCode(0);
 
         $this->assertTrue(true);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/getWithFormRequest')
@@ -245,14 +245,15 @@ class ExportPostmanTest extends TestCase
     public function test_rules_printing_export_to_human_readable_works()
     {
         config([
-            'api-postman.enable_formdata' => true,
-            'api-postman.print_rules' => true,
-            'api-postman.rules_to_human_readable' => true,
+            'api-exports.enable_formdata' => true,
+            'api-exports.print_rules' => true,
+            'api-exports.rules_to_human_readable' => true,
         ]);
 
         $this->artisan('export:postman')->assertExitCode(0);
 
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/storeWithFormRequest')
@@ -281,13 +282,12 @@ class ExportPostmanTest extends TestCase
         $eventScriptPath = 'tests/Fixtures/ExampleEvent.js';
 
         config([
-            'api-postman.prerequest_script' => $eventScriptPath,
-            'api-postman.test_script' => $eventScriptPath,
+            'api-exports.prerequest_script' => $eventScriptPath,
+            'api-exports.test_script' => $eventScriptPath,
         ]);
 
         $this->artisan('export:postman')->assertExitCode(0);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['event']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['event']);
 
         $events = $collection
             ->whereIn('listen', ['prerequest', 'test'])
@@ -305,12 +305,12 @@ class ExportPostmanTest extends TestCase
     public function test_php_doc_comment_export()
     {
         config([
-            'api-postman.include_doc_comments' => true,
+            'api-exports.include_doc_comments' => true,
         ]);
 
         $this->artisan('export:postman')->assertExitCode(0);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/phpDocRoute')
@@ -322,8 +322,8 @@ class ExportPostmanTest extends TestCase
     public function test_uri_is_correct()
     {
         $this->artisan('export:postman')->assertExitCode(0);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/phpDocRoute')
@@ -336,8 +336,8 @@ class ExportPostmanTest extends TestCase
     public function test_api_resource_routes_set_parameters_correctly_with_hyphens()
     {
         $this->artisan('export:postman')->assertExitCode(0);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/users/{user}/audit-logs/{audit_log}')
@@ -351,8 +351,8 @@ class ExportPostmanTest extends TestCase
     public function test_api_resource_routes_set_parameters_correctly_with_underscores()
     {
         $this->artisan('export:postman')->assertExitCode(0);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/users/{user}/other_logs/{other_log}')
@@ -366,8 +366,8 @@ class ExportPostmanTest extends TestCase
     public function test_api_resource_routes_set_parameters_correctly_with_camel_case()
     {
         $this->artisan('export:postman')->assertExitCode(0);
-
-        $collection = collect(json_decode(Storage::get('postman/'.config('api-postman.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
+        $collection = collect(json_decode(Storage::get('postman/'.config('api-exports.filename')), true)['item']);
 
         $targetRequest = $collection
             ->where('name', 'example/users/{user}/someLogs/{someLog}')

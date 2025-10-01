@@ -3,6 +3,7 @@
 namespace AndreasElia\PostmanGenerator\Processors;
 
 use AndreasElia\PostmanGenerator\Concerns\HasAuthentication;
+use AndreasElia\PostmanGenerator\Contracts\RouteReader;
 use Closure;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Validation\Rule;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationRuleParser;
 use ReflectionClass;
 use ReflectionFunction;
 
-class RouteProcessor
+class RouteProcessor implements RouteReader
 {
     use HasAuthentication;
 
@@ -29,11 +30,9 @@ class RouteProcessor
 
     public function __construct(Repository $config, Router $router)
     {
-        $this->config = $config['api-postman'];
+        $this->config = $config['api-exports'];
 
         $this->router = $router;
-
-        $this->resolveAuth();
     }
 
     public function process(array $output): array
@@ -60,24 +59,7 @@ class RouteProcessor
             $middlewares = $route->gatherMiddleware();
 
             foreach ($methods as $method) {
-                $includedMiddleware = false;
-
-                foreach ($middlewares as $middleware) {
-                    if (in_array($middleware, $this->config['include_middleware'])) {
-                        $includedMiddleware = true;
-                    }
-                }
-
-                if (empty($middlewares) || ! $includedMiddleware) {
-                    continue;
-                }
-
                 $reflectionMethod = $this->getReflectionMethod($route->getAction());
-
-                if (! $reflectionMethod) {
-                    continue;
-                }
-
                 $routeHeaders = $this->config['headers'];
 
                 if ($this->authentication && in_array($this->config['auth_middleware'], $middlewares)) {
@@ -86,7 +68,7 @@ class RouteProcessor
 
                 $uri = Str::of($route->uri())->replaceMatches('/{([[:alnum:]_]+)}/', ':$1');
 
-                if ($this->config['include_doc_comments']) {
+                if ($this->config['include_doc_comments'] && $reflectionMethod) {
                     $description = (new DocBlockProcessor)($reflectionMethod);
                 }
 
@@ -96,7 +78,9 @@ class RouteProcessor
                         $this->processRequest(
                             $method,
                             $uri,
-                            $this->config['enable_formdata'] ? (new FormDataProcessor)->process($reflectionMethod) : collect()
+                            $reflectionMethod && $this->config['enable_formdata']
+                                ? (new FormDataProcessor)->process($reflectionMethod)
+                                : collect()
                         ),
                         ['description' => $description ?? '']
                     ),
@@ -216,7 +200,7 @@ class RouteProcessor
     {
         return is_string($action['uses']) && Str::startsWith($action['uses'], [
             'C:32:"Opis\\Closure\\SerializableClosure',
-            'O:47:"Laravel\SerializableClosure\\SerializableClosure',
+            'O:47:"Laravel\\SerializableClosure\\SerializableClosure',
             'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure',
         ]);
     }
