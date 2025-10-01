@@ -5,6 +5,7 @@ namespace AndreasElia\PostmanGenerator\Commands;
 use AndreasElia\PostmanGenerator\SqlMap\Exporter as SqlMapExporter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class ExportSqlmapCommand extends Command
 {
@@ -49,11 +50,6 @@ class ExportSqlmapCommand extends Command
         $exporter->traverseItems($structure['item'] ?? [], $items);
         $host = parse_url(config('api-exports.base_url'), PHP_URL_HOST) ?? 'localhost';
         $timestamp = date('Y_m_d_His');
-        $storagePath = storage_path('app/private/sqlmap/');
-        if (!is_dir($storagePath)) {
-            mkdir($storagePath, 0777, true);
-        }
-        $count = 0;
         foreach ($items as $item) {
             $req = $item['request'];
             $method = strtoupper($req['method'] ?? 'GET');
@@ -84,8 +80,8 @@ class ExportSqlmapCommand extends Command
                 }
             }
             $filename = $timestamp.'_'.str_replace(['/','{','}','\\',':'], '_', $item['name']).'_'.$method.'.template';
-            file_put_contents($storagePath.$filename, $template);
+            Storage::disk('local')->put('private/sqlmap/'.$filename, $template);
         }
-        $this->info('Export SQLMap terminé. Les fichiers .template sont disponibles dans '.storage_path('app/private/sqlmap/'));
+        $this->info('Export SQLMap terminé. Les fichiers .template sont disponibles dans le disque local/private/sqlmap/');
     }
 }
